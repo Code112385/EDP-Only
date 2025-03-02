@@ -10,14 +10,17 @@ import java.awt.Image;
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
-import java.util.Date;
+// import java.util.Date;
 import java.util.Random;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,30 +36,95 @@ public class dashb extends javax.swing.JFrame {
     String imgpath;
     Connection conn;
     DefaultTableModel model;
-    Date dt = null;
     int id;
 
     public dashb() {
         initComponents();
         model = (DefaultTableModel) table.getModel();
-        conn = Img_Date_DBs.getConnection();
-        Img_Date_DBs.createInfoTable();
+        conn = UserDbs2.getConnection();
+        UserDbs2.createInfoTable();
+        //displayToTable();  //retrieving the from dbs;
+        //showDataInTable();   //retrieving the from dbs and store it to vector
+        showDataInTable2();
+
+    }
+
+    private void displayToTable() {
 
         try {
-            String query = "SELECT Id, ImgPath, Date FROM Info";
+            model.setRowCount(0);
+            String query = "SELECT * FROM Info ORDER BY Id asc";
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(query);
 
-            // Loop through the ResultSet and add rows to the model
             while (rs.next()) {
-                int iD = rs.getInt("Id");
+                int id = rs.getInt("Id");
                 String img = rs.getString("ImgPath");
-                String d = rs.getString("Date");
-                model.addRow(new Object[]{iD, img, d});
+                String name = rs.getString("Name");
+                int age = rs.getInt("Age");
+                String course = rs.getString("Course");
+                String date = rs.getString("Date");
+                model.addRow(new Object[]{id, img, name, age, course, date});
+            }
+
+        } catch (SQLException e) {
+
+        }
+    }
+
+    private void showDataInTable() {
+        int rowCount = 0;
+        try {
+            String query = "SELECT * FROM Info";
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+            //ResultSetMetaData rmd = rs.getMetaData();
+            //int colCount = rmd.getColumnCount();
+            model.setRowCount(0);
+
+            while (rs.next()) {
+                Vector v1 = new Vector();
+                Collections.addAll(v1, rs.getInt("Id"), rs.getString("ImgPath"), rs.getString("Name"), rs.getInt("Age"),
+                        rs.getString("Course"), rs.getDate("Date"));
+                model.addRow(v1);
+                rowCount++;
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Invalid", "Invalid Input", JOptionPane.ERROR_MESSAGE);
-            System.out.println(e);
+        }
+    }
+
+    private void showDataInTable2() {
+
+        ArrayList<userInfo> data = new ArrayList<>();
+        try {
+            Statement stmt = conn.createStatement();
+            String query = "SELECT * FROM Info";
+            ResultSet rs = stmt.executeQuery(query);
+            ResultSetMetaData rsmd = rs.getMetaData();
+
+            int colCount = rsmd.getColumnCount();
+            userInfo info;
+
+            while (rs.next()) {
+                info = new userInfo(rs.getInt("Id"), rs.getString("ImgPath"), rs.getString("Name"), rs.getInt("Age"),
+                        rs.getString("Course"), rs.getDate("Date"));
+                data.add(info);
+            }
+            Object[] row = new Object[colCount];
+            model.setRowCount(0);
+
+            for (userInfo datalist : data) {
+                row[0] = datalist.getId();
+                row[1] = datalist.getImg();
+                row[2] = datalist.getName();
+                row[3] = datalist.getAge();
+                row[4] = datalist.getCourse();
+                row[5] = datalist.getDate();
+                model.addRow(row);
+
+            }
+
+        } catch (SQLException e) {
         }
     }
 
@@ -89,6 +157,13 @@ public class dashb extends javax.swing.JFrame {
         table = new javax.swing.JTable();
         jScrollPane1 = new javax.swing.JScrollPane();
         displayID = new javax.swing.JTextArea();
+        nameTf = new javax.swing.JTextField();
+        ageTf = new javax.swing.JTextField();
+        cb = new javax.swing.JComboBox<>();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
 
         fc.setAcceptAllFileFilterUsed(false);
 
@@ -153,18 +228,18 @@ public class dashb extends javax.swing.JFrame {
 
         dateChooser.setBackground(new java.awt.Color(255, 255, 255));
         dateChooser.setDateFormatString("yyyy-MM-dd");
-        jPanel1.add(dateChooser, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 100, 170, -1));
+        jPanel1.add(dateChooser, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 120, 130, -1));
 
         table.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Id", "Image Path", "Date"
+                "Id", "Image Path", "Name", "Age", "Course", "Date"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                true, false, false
+                true, false, true, true, true, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -185,12 +260,34 @@ public class dashb extends javax.swing.JFrame {
         displayID.setColumns(20);
         displayID.setLineWrap(true);
         displayID.setTabSize(0);
+        displayID.setDisabledTextColor(new java.awt.Color(0, 0, 0));
         displayID.setEnabled(false);
         displayID.setMinimumSize(new java.awt.Dimension(82, 22));
         displayID.setPreferredSize(new java.awt.Dimension(82, 22));
         jScrollPane1.setViewportView(displayID);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 70, 130, -1));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 40, 130, -1));
+        jPanel1.add(nameTf, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 80, 170, -1));
+        jPanel1.add(ageTf, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 80, 70, -1));
+
+        cb.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jPanel1.add(cb, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 120, 170, -1));
+
+        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel1.setText("Name:");
+        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 83, -1, -1));
+
+        jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel2.setText("Course:");
+        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 120, -1, -1));
+
+        jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel3.setText("Age:");
+        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 80, -1, -1));
+
+        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel4.setText("Date:");
+        jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 120, -1, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 710, 520));
 
@@ -233,15 +330,22 @@ public class dashb extends javax.swing.JFrame {
         // TODO add your handling code here:
         Random random = new Random();
         id = 10000 + random.nextInt(90000);
-        String date = ((JTextField) dateChooser.getDateEditor().getUiComponent()).getText();
+        String name = nameTf.getText();
+        String course = cb.getSelectedItem().toString();
+        String strgAge = ageTf.getText();
+        int age = Integer.parseInt(strgAge);
+        Date date = Date.valueOf(new SimpleDateFormat("yyyy-MM-dd").format(dateChooser.getDate()));
 
         //database
         try {
             //Adding the data to database
-            PreparedStatement ps = conn.prepareStatement("INSERT INTO Info(Id, ImgPath, Date)VALUES(?,?,?)");
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO Info(Id, ImgPath, Name, Age, Course, Date)VALUES(?,?,?,?,?,?)");
             ps.setInt(1, id);
             ps.setString(2, imgpath);
-            ps.setString(3, date);
+            ps.setString(3, name);
+            ps.setInt(4, age);
+            ps.setString(5, course);
+            ps.setDate(6, date);
             ps.executeUpdate();
             JOptionPane.showMessageDialog(null, "Success", "Successfully Added", JOptionPane.INFORMATION_MESSAGE);
             clear();
@@ -251,7 +355,7 @@ public class dashb extends javax.swing.JFrame {
             //JOptionPane.showMessageDialog(this, "Invalid Input", "ERROR", JOptionPane.ERROR_MESSAGE);
         }
         //
-        model.addRow(new Object[]{id, imgpath, date});
+        model.addRow(new Object[]{id, imgpath, name, age, course, date});
 
 
     }//GEN-LAST:event_jButton3ActionPerformed
@@ -287,7 +391,7 @@ public class dashb extends javax.swing.JFrame {
 
     private void tableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableMouseClicked
         // TODO add your handling code here:
-
+/*
         int row = table.getSelectedRow();
 
         id = (int) model.getValueAt(row, 0);
@@ -308,6 +412,36 @@ public class dashb extends javax.swing.JFrame {
             dateChooser.setDate(dt);
         } catch (ParseException ex) {
             Logger.getLogger(dashb.class.getName()).log(Level.SEVERE, null, ex);
+        }
+         */
+        int row = table.getSelectedRow();
+        id = (int) model.getValueAt(row, 0);
+        String query = "SELECT * FROM Info WHERE Id = '" + id + "'";
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+
+            if (rs.next()) {
+                String strgId = String.valueOf(rs.getInt("Id"));
+                imgpath = rs.getString("ImgPath");
+                String name = rs.getString("Name");
+                String age = String.valueOf(rs.getInt("Age"));
+                String course = rs.getString("Course");
+                ImageIcon newImage = new ImageIcon(imgpath);
+                Image image = newImage.getImage();
+                Image myImage = image.getScaledInstance(imgholder.getWidth(), imgholder.getHeight(), Image.SCALE_SMOOTH);
+                newImage = new ImageIcon(myImage);
+
+                displayID.setText(strgId);
+                imgholder.setIcon(newImage);
+                nameTf.setText(name);
+                ageTf.setText(age);
+                cb.setSelectedItem(course);
+                dateChooser.setDate(rs.getDate("Date"));
+
+            }
+        } catch (SQLException e) {
+
         }
 
     }//GEN-LAST:event_tableMouseClicked
@@ -372,6 +506,8 @@ public class dashb extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField ageTf;
+    private javax.swing.JComboBox<String> cb;
     private com.toedter.calendar.JDateChooser dateChooser;
     private javax.swing.JButton delete;
     private javax.swing.JTextArea displayID;
@@ -381,10 +517,15 @@ public class dashb extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTextField nameTf;
     private javax.swing.JTable table;
     // End of variables declaration//GEN-END:variables
 }

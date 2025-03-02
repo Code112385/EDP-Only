@@ -13,7 +13,7 @@ import java.sql.Statement;
  *
  * @author senju
  */
-public class Img_Date_DBs {
+public class UserDbs2 {
 
     public static Connection getConnection() {
         Connection DbsConn = null;
@@ -29,14 +29,17 @@ public class Img_Date_DBs {
     }
 
     public static void createInfoTable() {
-        String query = "CREATE TABLE IF NOT EXISTS Info ("
-        + "Id INT UNIQUE, "
-        + "ImgPath VARCHAR(255) NOT NULL, "
-        + "Date VARCHAR(20) NOT NULL"
+String query = "CREATE TABLE IF NOT EXISTS Info ("
+        + "Id INT NOT NULL PRIMARY KEY, "
+        + "ImgPath VARCHAR(255), "
+        + "Name VARCHAR(30), "
+        + "Age SMALLINT, "
+        + "Course VARCHAR(10), "
+        + "`Date` DATE"  
         + ")";
 
 
-        try (Connection conn = Img_Date_DBs.getConnection(); Statement stmt = conn.createStatement()) {
+        try (Connection conn = UserDbs2.getConnection(); Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(query);
             System.out.println("Info table created successfully.");
         } catch (SQLException e) {
